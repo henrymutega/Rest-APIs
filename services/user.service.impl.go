@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"log.com/log-apis/models"
 )
@@ -13,8 +14,9 @@ type UserServiceImpl struct {
 }
 
 // CreateUser implements UserService.
-func (u UserServiceImpl) CreateUser(*models.User) error {
-	panic("unimplemented")
+func (u *UserServiceImpl) CreateUser(user *models.User) error {
+	_, err := u.usercollection.InsertOne(u.ctx, user)
+	return err
 }
 
 // DeleteUser implements UserService.
@@ -28,8 +30,11 @@ func (u UserServiceImpl) GetAll() ([]*models.User, error) {
 }
 
 // GetUser implements UserService.
-func (u UserServiceImpl) GetUser(*string) (*models.User, error) {
-	panic("unimplemented")
+func (u *UserServiceImpl) GetUser(name *string) (*models.User, error) {
+	var user *models.User
+	query := bson.D{bson.E{Key: "name", Value: name}}
+	err := u.usercollection.FindOne(u.ctx, query).Decode(&user)
+	return user, err
 }
 
 // UpdateUser implements UserService.
@@ -58,7 +63,7 @@ func (u UserServiceImpl) UpdateUser(*models.User) {
 // }
 
 func NewUserService(usercollection *mongo.Collection, ctx context.Context) UserService {
-	return UserServiceImpl{
+	return &UserServiceImpl{
 		usercollection: usercollection,
 		ctx:            ctx,
 	}
